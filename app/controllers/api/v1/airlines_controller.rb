@@ -1,16 +1,20 @@
+# frozen_string_literal: true
+
 module Api
   module V1
     class AirlinesController < ApplicationController
+      protect_from_forgery with: :null_session
+      
       def index
         airlines = Airline.all
 
-        render json: AirlineSerializer.new(airlines).seralized_json
+        render json: AirlineSerializer.new(airlines, options).serialized_json
       end
 
       def show
         airline = Airline.find_by(slug: params[:slug])
 
-        render json: AirlineSerializer.new(airlines).seralized_json
+        render json: AirlineSerializer.new(airline, options).serialized_json
       end
 
       def create
@@ -24,8 +28,8 @@ module Api
 
       def update
         airline = Airline.find_by(slug: params[:slug])
-        if airline.update
-          render json: AirlineSerializer.new(airline).serialized_json
+        if airline.update(airline_params)
+          render json: AirlineSerializer.new(airline, options).serialized_json
         else
           render json: { error: airline.errors.messages }, status: 422
         end
@@ -43,7 +47,11 @@ module Api
       private
 
       def airline_params
-        params.require(:airlines).permit(:name, :image_url)
+        params.require(:airline).permit(:name, :image_url)
+      end
+
+      def options
+        @options ||= { include: %i[reviews] }
       end
     end
   end
